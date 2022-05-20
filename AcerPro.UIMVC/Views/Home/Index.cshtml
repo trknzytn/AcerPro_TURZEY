@@ -1,0 +1,173 @@
+﻿@*@Model AcerPro.Business.CountryInfoService.tCountryCodeAndName*@
+
+@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="jumbotron">
+    <br />
+    <div class="col-md-12">
+
+        <select id="ddlNationality">
+            <option value="0">--Select Country--</option>
+            @foreach (var item in Model)
+            {
+                <option value="@item.sISOCode">@item.sName</option>
+            }
+        </select>
+
+        <p class="lead"></p>
+
+
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Detay</h2>
+
+            <table id="detay" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>ÜLKE</th>
+                        <th>Ülke Başkent</th>
+                        <th>Ülke Kısaltması</th>
+                        <th>Ülke Para Birimi</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><label id="LblCountryName"></label></td>
+                        <td><label id="LblCapitalCity"></label></td>
+                        <td><label id="LblCountryISOCode"></label></td>
+                        <td><label id="LblCountryCurrency"></label></td>
+                        <td><a id="btnSave" class="btn btn-primary btn">Kaydet</a></td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+<br />
+<br />
+<div class="row">
+    <div class="col-md-12">
+        <h2>Eklenenler</h2>
+
+        <table id="liste" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ÜLKE</th>
+                    <th>Ülke Kısaltması</th>
+                    <th>Ülke Başkent</th>
+                    <th>Ülke Para Birimi</th>
+                    <th>ID</th>
+                </tr>
+            </thead>
+        </table>
+
+    </div>
+</div>
+
+@section styles {
+    <link href="~/lib/datatables/css/jquery.dataTables.min.css" rel="stylesheet" />
+}
+
+@section scripts {
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/datatables/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            $('#ddlNationality').change(function () {
+                    //alert($(this).val());
+                    var code = $(this).val().toString();
+                    $.ajax(
+                    {
+                        url: "@Url.Action("GetCountry", "Home")",
+                        type: "POST",
+                        dataType: 'json',
+                        contentType: "application/json; charset=utf-8",
+                        data: JSON.stringify({ code: code }),
+                        success: function (result) {
+                            var lblCountryName = result.CountryName;
+                            $("#LblCountryName").text($("#ddlNationality option:selected").text());
+
+                            var lblCountryISOCode = result.CountryISOCode;
+                            $("#LblCountryISOCode").text(lblCountryISOCode);
+
+                            var lblCapitalCity = result.CapitalCity;
+                            $("#LblCapitalCity").text(lblCapitalCity);
+
+                            var lblCountryCurrency = result.CountryCurrency;
+                            $("#LblCountryCurrency").text(lblCountryCurrency);
+                        },
+                        error: function () {
+                            console.log('failed');
+                        }
+                    });
+                });
+
+           var listeTable = $('#liste').DataTable({
+               searching: false,
+               destroy: true,
+                columns: [
+                    { data: 'CountryName' },
+                    { data: 'CountryISOCode' },
+                    { data: 'CapitalCity' },
+                    { data: 'CountryCurrency' },
+                    { data: 'ID' }
+                ],
+            });
+
+
+            $('#btnSave').click(function (e) {
+                e.preventDefault();
+                var element = this;
+
+                var country = {};
+                country.CountryISOCode = $("#LblCountryISOCode").text();
+                country.CountryName = $("#ddlNationality option:selected").text();
+                country.CapitalCity = $("#LblCapitalCity").text();
+                country.CountryCurrency = $("#LblCountryCurrency").text();
+
+                $.ajax({
+                    url: "@Url.Action("Save", "Home")",
+                    type: "POST",
+                    data: JSON.stringify({ 'Country': country }),
+                    dataType: "json",
+                    traditional: true,
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data, result) {
+                        //if (data.status == "Success") {
+                        //    alert("Done");
+                        //    $(element).closest("form").submit();
+                        //} else {
+                        //    alert("Error occurs on the Database level!");
+                        //}
+
+                        
+                        $('#liste').DataTable({
+                            searching: false,
+                            destroy: true,
+                            data: data,
+                            columns: [                               
+                                { data: 'CountryName' },
+                                { data: 'CountryISOCode' },
+                                { data: 'CapitalCity' },
+                                { data: 'CountryCurrency' },
+                                { data: 'ID' }
+                            ],
+                        });
+
+                    },
+                    error: function () {
+                        alert("An error has occured!!!");
+                    }
+                });
+            });
+        });
+    </script>
+}
